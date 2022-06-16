@@ -80,7 +80,7 @@ const initState = {
 }
 
 export default function departmentReducer(state = initState, action) {
-    console.log("reducer",action);
+    // console.log("reducer",action);
     switch (action.type) {
         case ActionType.UPDATE_DEPARTMENT_MANAGER_LIST_SUCCESS:
             return {

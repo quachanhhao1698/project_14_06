@@ -1,3 +1,4 @@
+import { StarOutlined } from '@ant-design/icons';
 import { takeEvery, put, select, takeLatest } from 'redux-saga/effects'
 import * as ActionType from './actionTypes'
 
@@ -44,7 +45,7 @@ function* workerAPIUpdateDepartmentName(action) {
 function* workerUpdateDepartment(action) {
     console.log(action);
     try {
-        let deps = yield select((state) => state.departments);
+        let deps = yield select((state) => state.departmentSate.departments);
         const depIndex = deps.findIndex(dep => dep.id === action.data.id)
         switch (action.ttype) {
             case 'add_new':

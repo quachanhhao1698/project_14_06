@@ -2,3 +2,37 @@ body{
   background-color: #f1f2f6;
   padding: 10px;
 }
+
+.modal__invoice{
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__nav {
+  display: flex;
+  justify-content: space-between;
+}
+.modal__content{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.modal__content div{
+  flex: 1;
+}
+.modal__content div input{
+  border-radius: 5px;
+  /* margin-bottom: 10px; */
+}
+
+.modal__nav--status{
+  display: flex;
+}
+
+.modal__nav--status div{
+border: 1px solid black; 
+width: 100px;
+text-align: center;
+margin: auto;
+}

@@ -91,10 +91,10 @@ const DepartmentItem = (department) => {
 
       <Modal title="Chi tiết phòng ban" footer={false} visible={isModalVisible} onCancel={handleCancel}>
         <div>
-          <div style={{ position: 'absolute', top: 18, right: 80 }}>
+          <div style={{ position: 'absolute', top: 18, right: 100}}>
             <Switch defaultChecked={department.department.status ? true : false} onChange={(e) => { onChangeStatus(e) }} />
           </div>
-          <div style={{ position: 'absolute', top: 18, right: 50 }}>
+          <div style={{ position: 'absolute', top: 18, right: 70}}>
             <Dropdown overlay={
               <Menu>
                 <React.Fragment>
@@ -166,7 +166,7 @@ export default function DepartmentList() {
   return (
     <div>
       <Row>
-        {state.departments.map(department => (
+        {state.departmentSate.departments.map(department => (
           <DepartmentItem department={department} key={department.id} />
         )
         )}

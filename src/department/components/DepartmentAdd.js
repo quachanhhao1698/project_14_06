@@ -13,7 +13,10 @@ export default function () {
     const [user,setUser]=useState();
     
 
+   
+
     const showModal = () => {
+
         setIsModalVisible(true);
     };
 
@@ -25,6 +28,8 @@ export default function () {
             status:true,
             user:user
         }})
+        setName('');
+        setUser('');
         setIsModalVisible(false);
         
     };
@@ -41,10 +46,10 @@ export default function () {
             <Button shape='circle' type='primary' onClick={showModal}>+</Button><span> Quản lý phòng ban</span>
             <Modal title="Tạo mới phòng ban" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
                 <label>Tên phòng ban</label>
-                <Input onChange={(e)=>{setName(e.target.value)}} />
+                <Input onChange={(e)=>{setName(e.target.value)}} value={name} />
                 <label>Trưởng phòng</label>
                 <br />
-                <Select style={{width: '100%',}} onSelect={(value)=>{setUser(value)}}  >
+                <Select style={{width: '100%',}} onSelect={(value)=>{setUser(value)}}  value={user}>
                     {children.map(item =>
                         <Option key={item} value={item}>{item}</Option>
                     )}
