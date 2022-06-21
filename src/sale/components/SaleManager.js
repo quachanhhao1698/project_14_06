@@ -20,7 +20,7 @@ export default function SaleManager() {
             setState(() => store.getState())
         })
 
-        console.log('sale', state);
+        // console.log('sale', state);
 
     });
     return (

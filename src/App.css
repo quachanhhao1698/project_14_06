@@ -20,11 +20,14 @@ body{
 
 .modal__content div{
   flex: 1;
+  border-radius: 5px;
+
 }
-.modal__content div input{
+.modal__content  div input{
   border-radius: 5px;
   /* margin-bottom: 10px; */
 }
+
 
 .modal__nav--status{
   display: flex;

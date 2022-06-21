@@ -57,7 +57,13 @@ const initState = {
             status: 2,
         },
 
-    ]
+    ],
+    products:[{
+        prodId:'1',
+        name: 'Đá',
+        price:350000,
+    }]
+
 
 
 }
