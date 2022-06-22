@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import moment from "moment";
 import "antd/dist/antd.css";
 import {
@@ -6,18 +6,9 @@ import {
   SaveOutlined,
   CloseOutlined,
   PlusCircleOutlined,
-  SmallDashOutlined,
 } from "@ant-design/icons";
 import {
-  Button,
-  Modal,
-  Input,
-  Select,
-  Table,
-  Row,
-  Col,
-  DatePicker,
-  Tabs,
+  Button, Modal, Input, Select, Table, Row, Col, DatePicker, Tabs, Form, Popconfirm
 } from "antd";
 import store from "../../store/store";
 import "../../App.css";
@@ -26,19 +17,92 @@ const dateFormatList = ["DD/MM/YYYY", "DD/MM/YY"];
 const { Option } = Select;
 const { Column } = Table;
 
+const EditableContext = React.createContext(null);
+
+const EditableRow = ({ index, ...props }) => {
+  const [form] = Form.useForm();
+  return (
+    <Form form={form} component={false}>
+      <EditableContext.Provider value={form}>
+        <tr {...props} />
+      </EditableContext.Provider>
+    </Form>
+  );
+};
+
+const EditableCell = ({
+  title,
+  editable,
+  children,
+  dataIndex,
+  record,
+  handleSave,
+  ...restProps
+}) => {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef(null);
+  const form = useContext(EditableContext);
+  useEffect(() => {
+    if (editing) {
+      inputRef.current.focus();
+    }
+  }, [editing]);
+
+  const toggleEdit = () => {
+    setEditing(!editing);
+    form.setFieldsValue({
+      [dataIndex]: record[dataIndex],
+    });
+  };
+
+  const save = async () => {
+    try {
+      const values = await form.validateFields();
+      toggleEdit();
+      handleSave({ ...record, ...values });
+    } catch (errInfo) {
+      console.log('Save failed:', errInfo);
+    }
+  };
+
+  let childNode = children;
+
+  if (editable) {
+    childNode = editing ? (
+      <Form.Item
+        style={{
+          margin: 0,
+        }}
+        name={dataIndex}
+        rules={[
+          {
+            required: true,
+            message: `${title} is required.`,
+          },
+        ]}
+      >
+        <Input style={{ width: '100%' }} ref={inputRef} onPressEnter={save} onBlur={save} />
+      </Form.Item>
+    ) : (
+      <div
+        className="editable-cell-value-wrap"
+        style={{
+          padding: 0,
+          width: '100%'
+        }}
+        onClick={toggleEdit}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  return <td {...restProps}>{childNode}</td>;
+};
+
 export default function () {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [data_ctps, setData_ctps] = useState([
-    {
-      stt: "1", id: 1, sanpham: [
-        { masp: "SP1", tensp: "Đá", dongia: 10000, DVT: 'M1' },
-        { masp: "SP2", tensp: "Cát", dongia: 100000, DVT: 'M2' },
-        { masp: "SP3", tensp: "Xi măng", dongia: 80000, DVT: 'M3' },
-      ]
-    },
-  ]);
 
-  const [masp,setMasp]=useState([])
   const showModal = () => {
     setIsModalVisible(true);
   };
@@ -46,164 +110,198 @@ export default function () {
     setIsModalVisible(false);
   };
 
-  const today =
-    moment().date() + "/" + (moment().month() + 1) + "/" + moment().year();
-
+  const today = moment().date() + "/" + (moment().month() + 1) + "/" + moment().year();
   const customer = ["Công ty X", "Công ty Y", "Công ty Z"];
   const money = ["VNĐ", "$"];
 
-  const handleAddRow = () => {
-    let newdata = {
-      id: Math.random(),
-      stt: data_ctps.length + 1,
-      sanpham: [
-        { masp: "SP1", tensp: "Đá", dongia: 10000, DVT: 'M1' },
-        { masp: "SP2", tensp: "Cát", dongia: 100000, DVT: 'M2' },
-        { masp: "SP3", tensp: "Xi măng", dongia: 80000, DVT: 'M3' },
-      ],
-    };
-    let update = [...data_ctps, newdata];
-    setData_ctps(update);
-    console.log(data_ctps);
+  const [dataSource, setDataSource] = useState([
+    // {
+    //   key: '1',
+    //   product: 'Đá',
+    //   price: '',
+    //   quantity: '',
+    //   total: ''
+    // },
+  ]);
+  const [count, setCount] = useState(1);
+
+  const handleDelete = (key) => {
+    const newData = dataSource.filter((item) => item.key !== key);
+    setDataSource(newData);
   };
-  const handleDeleteRow = (id) => {
-    let update = data_ctps.filter(data => data.id !== id)
-    setData_ctps(update)
-  }
 
-  const handletotal = ()=>{
-    
-  }
+  const defaultColumns = [
 
-  const columns_ctps = [
     {
-      title: "#",
-      dataIndex: "stt",
-      key: "stt",
-      width:20,
-      render: (text) => <p>{text}</p>,
+      title: '#',
+      dataIndex: 'key',
+      width: '2%'
     },
     {
-      title: "Mã sản phẩm",
-      dataIndex: "sanpham",
-      width:120,
-      key: "sanpham",
-      render: (_, { sanpham }) => (
-        <>
-          <Select style={{width:'100%'}}>
-            {sanpham.map(sp =>
-
-              <Option key={sp.masp} value={sp.masp}>{sp.masp}</Option>
-            )}
-          </Select>
-        </>
-      ),
+      title: 'Mã sản phẩm',
+      dataIndex: '',
+      width: '8%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
+          <Option value={'SP1'}>SP1</Option>
+          <Option value={'SP2'}>SP2</Option>
+          <Option value={'SP3'}>SP3</Option>
+        </Select>
     },
     {
-      title: "Sản phẩm",
-      dataIndex: "tensp",
-      key: "tensp",
-      width:200,
-      render: (text) => <Input value={text} />,
+      title: 'Sản phẩm',
+      dataIndex: 'product',
+      width: '10%',
+      editable: true,
+      render: (text) => <Input value={text} />
     },
     {
-      title: "Đơn giá",
-      dataIndex: "address",
-      key: "address",
-      width:150,
-      render: (text) => <Input value={text} />,
+      title: 'Đơn giá',
+      dataIndex: 'price',
+      width: '10%',
+      editable: true,
+      render: (price) => <Input value={price} onChange={e => console.log('DG: ', e.target.value)} />
     },
     {
-      title: "SL",
-      dataIndex: "sl",
-      key: "sl",
-      width:100,
-      render: (text) => <Input value={text} />,
+      title: 'Số lượng',
+      dataIndex: 'quantity',
+      width: '10%',
+      editable: true,
+      render: (quantity) => <Input value={quantity} />
     },
     {
-      title: "ĐVT",
-      dataIndex: "address",
-      width:100,
-      key: "address",
-      render: (text) => (
-        <Select style={{width:'100%'}}>
+      title: 'Đơn vị tính',
+      dataIndex: '',
+      width: '5%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
           <Option value={'M1'}>M1</Option>
           <Option value={'M2'}>M2</Option>
           <Option value={'M3'}>M3</Option>
         </Select>
-      ),
     },
     {
-      title: "Thành tiền",
-      dataIndex: "address",
-      key: "address",
-      width:150,
-      render: (text) => <Input value={text} disabled onChange={handletotal} />,
+      title: 'Thành tiền',
+      dataIndex: '',
+      width: '10%',
+      render: (_, record) => {
+        console.log(record);
+        let total = record.total =Number(record.price) * Number(record.quantity)
+        console.log(total);
+        return (
+
+          <Input value={total}  disabled />
+        )
+      }
     },
     {
-      title: "TK nợ",
-      dataIndex: "address",
-      width:100,
-      key: "address",
-      render: (text) => (
-        <Select style={{width:'100%'}}>
+      title: 'TK nợ',
+      dataIndex: '',
+      width: '10%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
           <Option value={'130'}>130</Option>
           <Option value={'131'}>131</Option>
           <Option value={'132'}>132</Option>
         </Select>
-      ),
     },
     {
-      title: "TK có",
-      dataIndex: "address",
-      width:100,
-      key: "address",
-      render: (text) => (
-        <Select style={{width:'100%'}}>
-          <Option value={'5000'}>5000</Option>
+      title: 'TK có',
+      dataIndex: '',
+      width: '10%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
           <Option value={'5111'}>5111</Option>
           <Option value={'5222'}>5222</Option>
+          <Option value={'5333'}>5333</Option>
         </Select>
-      ),
     },
     {
-      title: "Kho",
-      dataIndex: "address",
-      key: "address",
-      render: (text) => (
-        <Select style={{width:'100%'}}>
-          <Option  value={'Kho vật liệu xây dựng 1'}>Kho vật liệu xây dựng 1</Option>
-          <Option value={'Kho vật liệu xây dựng 2'}>Kho vật liệu xây dựng 2</Option>
-          <Option value={'Kho vật liệu xây dựng 3'}>Kho vật liệu xây dựng 3</Option>
+      title: 'Kho',
+      dataIndex: '',
+      width: '15%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
+          <Option value={'Kho 1'}>Kho 1</Option>
+          <Option value={'Kho 2'}>Kho 2</Option>
+          <Option value={'Kho 3'}>Kho 3</Option>
         </Select>
-      ),
     },
     {
-      title: "Khoản mục",
-      dataIndex: "address",
-      width:150,
-      key: "address",
-      render: (text) => (
-        <Select style={{width:'100%'}}>
+      title: 'Khoản mục',
+      dataIndex: '',
+      width: '15%',
+      render: () =>
+        <Select style={{ width: '100%' }}>
           <Option value={'Khoản mục 1'}>Khoản mục 1</Option>
           <Option value={'Khoản mục 2'}>Khoản mục 2</Option>
           <Option value={'Khoản mục 3'}>Khoản mục 3</Option>
         </Select>
-      ),
     },
     {
-      title: "",
-      dataIndex: "id",
-      key: "id",
-      width:50,
-      render: (_,{id}) =>
-        <Button type="ghost" style={{ border: 'none', color: 'red' }}
-          icon={<CloseOutlined />}
-           onClick={()=>{handleDeleteRow(id)}}
-           >
-        </Button>
+      title: '',
+      dataIndex: 'operation',
+      render: (_, record) =>
+        dataSource.length >= 1 ? (
+          <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record.key)}>
+
+            <Button icon={<CloseOutlined />} style={{ border: 'none', color: 'red' }}></Button>
+          </Popconfirm>
+        ) : null,
     },
   ];
+
+  const handleAdd = () => {
+    const newData = {
+      key: count,
+      product: '',
+      price: '',
+      quantity: '',
+      total: ''
+    };
+    setDataSource([...dataSource, newData]);
+    setCount(count + 1);
+  };
+
+  const handleSave = (row) => {
+    const newData = [...dataSource];
+    const index = newData.findIndex((item) => row.key === item.key);
+    const item = newData[index];
+    newData.splice(index, 1, { ...item, ...row });
+    setDataSource(newData);
+  };
+
+  const components = {
+    body: {
+      row: EditableRow,
+      cell: EditableCell,
+    },
+  };
+  const columns = defaultColumns.map((col) => {
+    if (!col.editable) {
+      return col;
+    }
+
+    return {
+      ...col,
+      onCell: (record) => ({
+        record,
+        editable: col.editable,
+        dataIndex: col.dataIndex,
+        title: col.title,
+        handleSave,
+      }),
+    };
+  });
+
+
+  let tong = 0;
+  dataSource.forEach(data=>{
+    tong += data.total
+    console.log(tong);
+  })
+
+  let thue= (tong*10)/100
 
   return (
     <>
@@ -282,14 +380,14 @@ export default function () {
                       }}
                     >
                       <label>Ngày chứng từ (*)</label>
-                      <DatePicker style={{width:'100%'}}
+                      <DatePicker style={{ width: '100%' }}
                         defaultValue={moment(today, dateFormatList[0])}
                         format={dateFormatList}
                       />
                     </Col>
                     <Col span={12} style={{ marginRight: 10 }}>
                       <label>Ngày hạch toán (*)</label>
-                      <DatePicker style={{width:'100%'}}
+                      <DatePicker style={{ width: '100%' }}
                         defaultValue={moment(today, dateFormatList[0])}
                         format={dateFormatList}
                       />
@@ -335,12 +433,12 @@ export default function () {
               <Tabs defaultActiveKey="1">
                 <TabPane tab="Chi tiết phát sinh" key="1">
                   <Table
-                    dataSource={data_ctps}
+                    components={components}
+                    rowClassName={() => 'editable-row'}
                     bordered
-                    columns={columns_ctps}
-                    scroll={{ x: 1300 }}
-                    size='small'
-                   
+                    dataSource={dataSource}
+                    columns={columns}
+                    scroll={{ x: 1200 }}
                   />
                 </TabPane>
                 <TabPane tab="Chiết khấu" key="2">
@@ -371,10 +469,12 @@ export default function () {
           <Row>
             <Col span={12}>
               <Button
-                type="link"
-                style={{ width: 0, padding: "4px 0px" }}
+                onClick={handleAdd}
+                type="primary"
+                style={{
+                  marginBottom: 16,
+                }}
                 icon={<PlusCircleOutlined />}
-                onClick={handleAddRow}
               >
                 Thêm mới dòng
               </Button>
@@ -385,19 +485,19 @@ export default function () {
                 <Col span={12} style={{ fontWeight: "bold" }}>
                   Tổng tiền trước thuế:
                 </Col>
-                <Col span={12}>100.0000</Col>
+                <Col span={12}>{tong}</Col>
               </Row>
               <Row>
                 <Col span={12} style={{ fontWeight: "bold" }}>
                   Thuế:
                 </Col>
-                <Col span={12}>10.0000</Col>
+                <Col span={12}>{thue}</Col>
               </Row>
               <Row>
                 <Col span={12} style={{ fontWeight: "bold" }}>
                   Tổng tiền:
                 </Col>
-                <Col span={12}>90.0000</Col>
+                <Col span={12}>{tong-thue}</Col>
               </Row>
             </Col>
           </Row>
